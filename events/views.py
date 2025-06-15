@@ -15,6 +15,10 @@ class ListCreateView(generics.ListCreateAPIView):
     serializer_class = EventSerializer
     permission_classes = [IsAutheticatedOrReadOnly]
 
+    def perform_create(self, serializer):
+        serializer.save(creator=self.request.user)
+
+
 class ListUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Event.objects.all()
     serializer_class = EventSerializer

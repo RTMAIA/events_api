@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 
 class Event(models.Model):
-    tittle = models.CharField(max_length= 50)
+    title = models.CharField(max_length= 50)
     description = models.TextField()
     date = models.DateField()
     time = models.TimeField()
@@ -13,7 +13,7 @@ class Event(models.Model):
     creator = models.ForeignKey(User, on_delete=models.DO_NOTHING)
 
     def __str__(self):
-        return self.tittle
+        return self.title
 
 class Registration(models.Model):
     user = models.CharField(max_length=15)
