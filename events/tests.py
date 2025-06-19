@@ -130,9 +130,4 @@ def test_create_event_not_authenticated(api_client):
     response = api_client.post(url, data, format='json')
 
     assert response.status_code == 401
-    
 
-
-    
-    
-   
