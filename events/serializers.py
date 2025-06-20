@@ -9,6 +9,12 @@ class EventSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['creator']
 
+    def validate(self, data):
+        exist_event = Event.objects.filter(title=data['title']).filter(date=data['date']).filter(time=data['time'])
+        if len(exist_event) > 0:
+            raise serializers.ValidationError('Já existe um evento neste local, data e horario.')
+        return super().validate(data)
+
 class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Registration
@@ -19,7 +25,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         number_regristrations = len(Registration.objects.filter(event_id=validated_data['event'].id))
         event_capacity = Event.objects.get(pk=validated_data['event'].id)
         duplicate_registration = Registration.objects.filter(event_id=validated_data['event'].id).filter(user_id=validated_data['user'].id)
-        print(len(duplicate_registration))
+        
         if number_regristrations >= event_capacity.capacity:
             raise serializers.ValidationError('Número de inscrições chegou ao limite maximo.')
         if len(duplicate_registration) >= 1:
