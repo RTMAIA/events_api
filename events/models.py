@@ -23,7 +23,7 @@ class Event(models.Model):
 class Registration(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     event = models.ForeignKey(Event, on_delete=models.DO_NOTHING)
-    resgistration_date = models.DateField(auto_now_add=True)
+    registration_date = models.DateField(auto_now_add=True)
 
     def __str__(self):
-        return f'{self.user.username} | {self.event.title} | {self.resgistration_date}'
+        return f'{self.user.username} | {self.event.title} | {self.registration_date}'

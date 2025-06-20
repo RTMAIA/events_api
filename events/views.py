@@ -4,7 +4,11 @@ from .models import Event, Registration
 from .serializers import EventSerializer,RegistrationSerializer, UserSerializer
 from .permissions import IsAutheticatedOrReadOnly, IsOwnerOrReadOnly, IsAdminUser
 from django.contrib.auth.models import User
+from .filters import EventFilter
+from django_filters import rest_framework
 from rest_framework.exceptions import NotAuthenticated, NotFound
+from rest_framework.response import Response
+from rest_framework import status
 # Create your views here.
 
 class CreateUser(generics.CreateAPIView):
@@ -16,9 +20,17 @@ class ListCreateView(generics.ListCreateAPIView):
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes = [IsAutheticatedOrReadOnly]
+    filter_backends = (rest_framework.DjangoFilterBackend, )
+    filterset_class = EventFilter
 
     def perform_create(self, serializer):
         serializer.save(creator=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        if not queryset:
+            return Response([], status=status.HTTP_204_NO_CONTENT)
+        return super().list(request, *args, **kwargs)
 
 class ListUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Event.objects.all()
