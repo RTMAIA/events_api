@@ -2,6 +2,7 @@ import django_filters
 from .models import Event
 
 class EventFilter(django_filters.FilterSet):
+
     category = django_filters.CharFilter(field_name='category', lookup_expr='icontains')
     date = django_filters.IsoDateTimeFilter(field_name='date')
     year = django_filters.NumberFilter(field_name='date', lookup_expr='year')

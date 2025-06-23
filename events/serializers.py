@@ -4,10 +4,13 @@ from django.contrib.auth.models import User
 
 
 class EventSerializer(serializers.ModelSerializer):
+    creator = serializers.SlugRelatedField(read_only=True, slug_field='username')
+    
     class Meta:
         model = Event
-        fields = '__all__'
+        fields = ['id', 'title', 'description', 'date', 'time', 'local', 'capacity', 'category', 'creator']
         read_only_fields = ['creator']
+        
 
     def validate(self, data):
         exist_event = Event.objects.filter(title=data['title']).filter(date=data['date']).filter(time=data['time'])
@@ -16,9 +19,11 @@ class EventSerializer(serializers.ModelSerializer):
         return super().validate(data)
 
 class RegistrationSerializer(serializers.ModelSerializer):
+    user = serializers.SlugRelatedField(read_only=True, slug_field='username')
+    event = serializers.SlugRelatedField(read_only=True, slug_field='title')
     class Meta:
         model = Registration
-        fields = '__all__'
+        fields = ['user', 'event']
         read_only_fields = ['user', 'event']
 
     def create(self, validated_data):

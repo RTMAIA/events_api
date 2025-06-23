@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 class Event(models.Model):
     title = models.CharField(max_length= 50)
@@ -8,7 +8,8 @@ class Event(models.Model):
     date = models.DateField()
     time = models.TimeField()
     local = models.CharField(max_length=50)
-    capacity = models.IntegerField()
+    capacity = models.IntegerField(validators=[MinValueValidator(1, message='O valor de capacidade não pode ser menor que 1.'), 
+                                               MaxValueValidator(10000, message='O valor de capacidade não pode ser maior que 10000.')])
     category = models.CharField(
         max_length=20,choices=[
                                 ('tecnologia', 'Técnologia'),

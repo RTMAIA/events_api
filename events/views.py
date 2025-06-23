@@ -5,7 +5,7 @@ from .serializers import EventSerializer,RegistrationSerializer, UserSerializer
 from .permissions import IsAutheticatedOrReadOnly, IsOwnerOrReadOnly, IsAdminUser
 from django.contrib.auth.models import User
 from .filters import EventFilter
-from django_filters import rest_framework
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.exceptions import NotAuthenticated, NotFound
 from rest_framework.response import Response
 from rest_framework import status
@@ -17,10 +17,11 @@ class CreateUser(generics.CreateAPIView):
     permission_classes = [IsAdminUser]
 
 class ListCreateView(generics.ListCreateAPIView):
+    
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes = [IsAutheticatedOrReadOnly]
-    filter_backends = (rest_framework.DjangoFilterBackend, )
+    filter_backends = [DjangoFilterBackend]
     filterset_class = EventFilter
 
     def perform_create(self, serializer):
@@ -53,7 +54,7 @@ class ListMyRegistrations(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        registration = Registration.objects.filter(user_id=self.request.user)
+        registration = Registration.objects.filter(user_id=self.request.user.id)
         if not user.is_authenticated:
             raise NotAuthenticated('Você deve estar logado para acessar Minhas Inscrições.')
         if user.is_authenticated and len(registration) == 0:
