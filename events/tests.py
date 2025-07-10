@@ -4,7 +4,8 @@ from django.urls import reverse
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Event, Registration
 from django.contrib.auth.models import User
-
+from django.test.utils import CaptureQueriesContext
+from django.db import connection
 
 
 @pytest.fixture
@@ -63,7 +64,7 @@ def test_create_event(auth_client, user):
     assert response.data['local'] == data['local']
     assert response.data['capacity'] == data['capacity']
     assert response.data['category'] == data['category']
-    assert response.data['creator'] == user.pk
+    assert response.data['creator'] == user.username
     assert Event.objects.get(pk=response.data['id'])
 
 @pytest.mark.django_db
@@ -135,13 +136,13 @@ def test_create_event_not_authenticated(api_client):
 def test_create_registration(auth_client, event):
     url = reverse('Registration', kwargs={'pk': event.pk})
     response = auth_client.post(url, format='json')
-    registration = Registration.objects.filter(pk=event.pk)
+    registration = Registration.objects.filter(event_id=event.pk)
 
     assert response.status_code == 201
     assert len(registration) == 1
     assert response.data['registration_date'] == str(registration[0].registration_date)
-    assert response.data['event'] == registration[0].event.id
-    assert response.data['user'] == registration[0].user.id
+    assert response.data['event'] == registration[0].event.title
+    assert response.data['user'] == registration[0].user.username
 
 @pytest.mark.django_db
 def test_event_capacity_limit(auth_client, event):
@@ -173,7 +174,7 @@ def test_event_filter_category(api_client, event):
     response = api_client.get(url, format='json')
 
     assert response.status_code == 200
-    assert response.data[0]['category'] == category
+    assert response.data['results'][0]['category'] == category
 
 @pytest.mark.django_db
 def test_event_filter_category_not_exist(api_client, event):
@@ -190,7 +191,7 @@ def test_event_filter_date(api_client, event):
     response = api_client.get(url, format='json')
 
     assert response.status_code == 200
-    assert response.data[0]['date'] == date
+    assert response.data['results'][0]['date'] == date
 
 @pytest.mark.django_db
 def test_event_filter_year(api_client, event):
@@ -199,7 +200,7 @@ def test_event_filter_year(api_client, event):
     response = api_client.get(url, format='json')
 
     assert response.status_code == 200
-    assert response.data[0]['date'][0:4] == year
+    assert response.data['results'][0]['date'][0:4] == year
     
 @pytest.mark.django_db
 def test_event_filter_year_gte(api_client, event):
@@ -208,7 +209,7 @@ def test_event_filter_year_gte(api_client, event):
     response = api_client.get(url, format='json')
     
     assert response.status_code == 200
-    assert response.data[0]['date'][0:4] == year
+    assert response.data['results'][0]['date'][0:4] == year
     assert len(response.data) > 0
 
 @pytest.mark.django_db
@@ -218,7 +219,7 @@ def test_event_filter_year_lte(api_client, event):
     response = api_client.get(url, format='json')
     
     assert response.status_code == 200
-    assert response.data[0]['date'][0:4] == year
+    assert response.data['results'][0]['date'][0:4] == year
     assert len(response.data) > 0
 
 @pytest.mark.django_db
@@ -228,7 +229,7 @@ def test_event_filter_month(api_client, event):
     response = api_client.get(url, format='json')
     
     assert response.status_code == 200
-    assert response.data[0]['date'][5:7] == month
+    assert response.data['results'][0]['date'][5:7] == month
 
 @pytest.mark.django_db
 def test_event_filter_month_gte(api_client, event):
@@ -237,7 +238,7 @@ def test_event_filter_month_gte(api_client, event):
     response = api_client.get(url, format='json')
     
     assert response.status_code == 200
-    assert response.data[0]['date'][5:7] == month 
+    assert response.data['results'][0]['date'][5:7] == month 
     assert len(response.data) > 0
 
 @pytest.mark.django_db
@@ -247,7 +248,7 @@ def test_event_filter_month_lte(api_client, event):
     response = api_client.get(url, format='json')
     
     assert response.status_code == 200
-    assert response.data[0]['date'][5:7] == month 
+    assert response.data['results'][0]['date'][5:7] == month 
     assert len(response.data) > 0 
 
 @pytest.mark.django_db
@@ -257,7 +258,7 @@ def test_event_filter_day(api_client, event):
     response = api_client.get(url, format='json')
    
     assert response.status_code == 200
-    assert response.data[0]['date'][8:10] == day
+    assert response.data['results'][0]['date'][8:10] == day
     
 @pytest.mark.django_db
 def test_event_filter_day_gte(api_client, event):
@@ -266,7 +267,7 @@ def test_event_filter_day_gte(api_client, event):
     response = api_client.get(url, format='json')
    
     assert response.status_code == 200
-    assert response.data[0]['date'][8:10] == day
+    assert response.data['results'][0]['date'][8:10] == day
     assert len(response.data) > 0
 
 @pytest.mark.django_db
@@ -276,12 +277,8 @@ def test_event_filter_day_lte(api_client, event):
     response = api_client.get(url, format='json')
    
     assert response.status_code == 200
-    assert response.data[0]['date'][8:10] == day
+    assert response.data['results'][0]['date'][8:10] == day
     assert len(response.data)
-
-
-
-
 
 @pytest.mark.django_db
 def test_event_filter_date_not_exist(api_client, event):
@@ -362,3 +359,11 @@ def test_event_filter_day_lte_not_exist(api_client, event):
     response = api_client.get(url, format='json')
    
     assert response.status_code == 204
+
+@pytest.mark.django_db
+def test_event_queryset_optimized(api_client, event):
+    with CaptureQueriesContext(connection) as ctx:
+        url = reverse('ListCreate')
+        response = api_client.get(url, format='json')
+       
+        assert response.status_code == 200

@@ -9,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.exceptions import NotAuthenticated, NotFound
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Count
 # Create your views here.
 
 class CreateUser(generics.CreateAPIView):
@@ -32,6 +33,9 @@ class ListCreateView(generics.ListCreateAPIView):
         if not queryset:
             return Response([], status=status.HTTP_204_NO_CONTENT)
         return super().list(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        return Event.objects.select_related('creator').annotate(num_registration=Count('registration')).order_by('id')
 
 class ListUpdateDeleteView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Event.objects.all()

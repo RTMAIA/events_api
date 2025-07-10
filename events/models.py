@@ -5,7 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 class Event(models.Model):
     title = models.CharField(max_length= 50)
     description = models.TextField()
-    date = models.DateField()
+    date = models.DateField(db_index=True)
     time = models.TimeField()
     local = models.CharField(max_length=50)
     capacity = models.IntegerField(validators=[MinValueValidator(1, message='O valor de capacidade não pode ser menor que 1.'), 

@@ -23,8 +23,8 @@ class RegistrationSerializer(serializers.ModelSerializer):
     event = serializers.SlugRelatedField(read_only=True, slug_field='title')
     class Meta:
         model = Registration
-        fields = ['user', 'event']
-        read_only_fields = ['user', 'event']
+        fields = ['user', 'event', 'registration_date']
+        read_only_fields = ['user', 'event', 'registration_date']
 
     def create(self, validated_data):
         number_regristrations = len(Registration.objects.filter(event_id=validated_data['event'].id))
